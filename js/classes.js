@@ -1,6 +1,20 @@
 class SoundManager {
-  constructor() {}
+  constructor() {
+    this.sounds = {
+      slider: "resources/wood.flac",
+      line: "resources/158924__carlmartin__jembay-hit-1-center-closed.wav",
+      polygon: "resources/158924__carlmartin__jembay-hit-1-center-closed.wav",
+      brick: "resources/158924__carlmartin__jembay-hit-1-center-closed.wav",
+      brickBreak: "resources/66778__kevinkace__crate-break-2.wav",
+    };
+  }
+
+  playSound(type) {
+    if (this.sounds[type]) new Audio(this.sounds[type]).play();
+  }
 }
+
+soundManager = new SoundManager();
 
 class EventHandler {
   constructor() {
@@ -286,6 +300,11 @@ class Ball extends EventHandler {
     this.addEventListener("lineCollision", () => {
       this.internalBounceMark = true;
     });
+
+    //sound
+    this.addEventListener("collision", (obj) => {
+      soundManager.playSound(obj.type);
+    });
   }
 
   copy() {
@@ -416,8 +435,9 @@ class Ball extends EventHandler {
   }
 }
 
-class BrickManager {
+class BrickManager extends EventHandler {
   constructor(balls, brickW, brickH, brickMap, otherObjects = []) {
+    super();
     this.balls = balls;
     balls.forEach((b) =>
       b.addEventListener("collision", () => {

@@ -184,5 +184,5 @@ const levels = [
 //levels
 
 const game = new GameManager(levels);
-game.currentLevel = 6;
+game.currentLevel = 1;
 game.start();
