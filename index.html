@@ -5,17 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Bricks</title>
     <link rel="stylesheet" type="text/css" href="css/index.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body style="display: flex; justify-content: center; align-items: center;">
-    <canvas
-      id="mainCanvas"
-      style="
-        border: 1px solid black;
-        width: 100vh;
-        height: 100vh;
-        background: white;
-      "
-    ></canvas>
+    <div id="pregame">
+      <div id="innerPregame">
+        <h1>DARK BRIX</h1>
+        <input type="text" id="nameInput" placeholder="ENTER YOUR NAME"/>
+        <button id="beginButton">BEGIN</button>
+      </div>
+    </div>
+    <div id="gameStats">
+      time: <div id="timerDiv">00:00</div></br>
+      level: <div id="levelDiv"></div>
+      attempts: <div id="attemptsDiv"></div>
+      <div></div>
+    </div>
+    <div id="endDiv">
+      <div class="endDivInner">
+        <div>
+          <h6>You scored:</h6>
+          <ol id="pointsExplain">
+            <li>20</li>
+          </ol>
+        </div>
+        <h1 id="finalPoints">200</h1>
+        <hr />
+        <h6>Scoreboard:</h6>
+        <hr />
+        <div >
+          <table id="otherPlayers">
+          </table>
+        </div>
+      </div>
+    </div>
+    <canvas id="mainCanvas"></canvas>
     <script src="js/classes.js"></script>
     <script src="js/main.js"></script>
   </body>

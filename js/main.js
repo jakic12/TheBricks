@@ -52,24 +52,6 @@ const levels = [
     ),
     [new Slider(new Vector(0, 900), new Vector(1000, 900), 300, 50, 0.01)]
   ),
-  new Level(
-    new BrickManager(
-      [
-        new Ball(new Vector(canvas.width / 2, 300), 10, new Vector(0, 10)),
-        new Ball(new Vector(canvas.width / 2, 600), 10, new Vector(0, 10)),
-      ],
-      1000 / 10,
-      1000 / 20,
-      [
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 1, 2, 2, 1, 0, 0, 0],
-      ],
-      [...walls]
-    ),
-    [new Slider(new Vector(0, 900), new Vector(1000, 900), 300, 50, 0.01)]
-  ),
   new Level( // /^\
     new BrickManager(
       [new Ball(new Vector(canvas.width / 2, 200), 5, new Vector(0, 5))],
@@ -129,6 +111,32 @@ const levels = [
   ),
   new Level(
     new BrickManager(
+      [new Ball(new Vector(canvas.width / 2 + 10, 100), 10, new Vector(-2, 2))],
+      1000 / 10,
+      1000 / 20,
+      [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [0, 0, 0, 0, 2, 2, 0, 0, 0, 0],
+        [0, 0, 0, 2, 3, 3, 2, 0, 0, 0],
+        [0, 0, 0, 2, 3, 3, 2, 0, 0, 0],
+        [0, 0, 0, 0, 2, 2, 0, 0, 0, 0],
+      ]
+    ),
+    [
+      new Slider(new Vector(500, 10), new Vector(990, 700), 300, 50, 0.01),
+      new Slider(new Vector(990, 700), new Vector(10, 700), 300, 50, 0.01),
+      new Slider(new Vector(500, 10), new Vector(10, 700), 300, 50, 0.01),
+    ]
+  ),
+  new Level(
+    new BrickManager(
       [new Ball(new Vector(canvas.width / 2 + 10, 50), 10, new Vector(-5, 5))],
       1000 / 10,
       1000 / 20,
@@ -154,35 +162,43 @@ const levels = [
       new Slider(new Vector(990, 990), new Vector(990, 10), 300, 50, 0.01),
     ]
   ),
-  new Level(
-    new BrickManager(
-      [new Ball(new Vector(canvas.width / 2 + 10, 100), 10, new Vector(-2, 2))],
-      1000 / 10,
-      1000 / 20,
-      [
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [0, 0, 0, 0, 2, 2, 0, 0, 0, 0],
-        [0, 0, 0, 2, 3, 3, 2, 0, 0, 0],
-        [0, 0, 0, 2, 3, 3, 2, 0, 0, 0],
-        [0, 0, 0, 0, 2, 2, 0, 0, 0, 0],
-      ]
-    ),
-    [
-      new Slider(new Vector(500, 10), new Vector(990, 700), 300, 50, 0.01),
-      new Slider(new Vector(990, 700), new Vector(10, 700), 300, 50, 0.01),
-      new Slider(new Vector(500, 10), new Vector(10, 700), 300, 50, 0.01),
-    ]
-  ),
 ];
 //levels
 
-const game = new GameManager(levels);
-game.currentLevel = 1;
-game.start();
+// ui
+const gameStats = document.getElementById("gameStats");
+const timerDiv = document.getElementById("timerDiv");
+const levelDiv = document.getElementById("levelDiv");
+const attemptsDiv = document.getElementById("attemptsDiv");
+
+const endDiv = document.getElementById("endDiv");
+const finalPoints = document.getElementById("finalPoints");
+const pointsExplain = document.getElementById("pointsExplain");
+const otherPlayers = document.getElementById("otherPlayers");
+
+const game = new GameManager(
+  levels,
+  new UiManager(
+    gameStats,
+    timerDiv,
+    levelDiv,
+    attemptsDiv,
+    endDiv,
+    finalPoints,
+    pointsExplain,
+    otherPlayers
+  ),
+  (points) => {
+    console.log(`final points: ${points}`);
+  }
+);
+game.currentLevel = 0;
+
+document.getElementById("beginButton").addEventListener("click", () => {
+  const name = document.getElementById("nameInput").value;
+  if (name) {
+    game.name = name;
+    document.getElementById("pregame").style.display = "none";
+    game.start();
+  }
+});

@@ -513,37 +513,139 @@ class BrickManager extends EventHandler {
   }
 }
 
-const animationInterval = (callback) => {
+const animationInterval = function (callback, stopObject = { stop: false }) {
   callback();
-  requestAnimationFrame(() => animationInterval(callback));
+  if (!stopObject.stop) {
+    requestAnimationFrame(() => animationInterval(callback, stopObject));
+  }
 };
 
-class GameManager {
-  constructor(levels) {
-    this.levels = levels;
-    this.combinedAttempts = 0;
-    this.levels.forEach(
-      (l) =>
-        (l.onEnd = (att) => {
-          this.currentLevel++;
-          this.combinedAttempts += att;
-        })
-    );
-    this.currentLevel = 0;
+class UiManager {
+  constructor(
+    gameStats,
+    timerDiv,
+    levelDiv,
+    attemptsDiv,
+    endDiv,
+    finalPoints,
+    pointsExplain,
+    otherPlayers
+  ) {
+    this.gameStats = gameStats;
+    this.timerDiv = timerDiv;
+    this.levelDiv = levelDiv;
+    this.attemptsDiv = attemptsDiv;
+
+    this.endDiv = endDiv;
+    this.finalPoints = finalPoints;
+    this.pointsExplain = pointsExplain;
+    this.otherPlayers = otherPlayers;
   }
 
   start() {
+    this.gameStats.style.display = `block`;
+    this.timerDiv.innerText = "00:00";
+    this.levelDiv.innerText = 1;
+    this.attemptsDiv.innerText = 1;
+    this.secondsPassed = 0;
+    this.timerInterval = setInterval(() => {
+      this.secondsPassed++;
+      this.timerDiv.innerText = `${`${parseInt(
+        this.secondsPassed / 60
+      )}`.padStart(2, "0")}:${`${this.secondsPassed % 60}`.padStart(2, "0")}`;
+    }, 1000);
+  }
+
+  end(points, players) {
+    this.pointsExplain.innerHtml = "";
+    points.forEach((points) => {
+      const row = document.createElement("LI");
+      row.innerText = points;
+      this.pointsExplain.appendChild(row);
+    });
+    this.finalPoints.innerText = points.reduce((a, b) => a + b, 0);
+    players.forEach((p) => {
+      const row = document.createElement("tr");
+
+      const name = document.createElement("td");
+      name.className = "name";
+      name.innerText = p.name;
+      row.appendChild(name);
+
+      const points = document.createElement("td");
+      points.className = "points";
+      points.innerText = p.points;
+      row.appendChild(points);
+
+      if (p.current) {
+        row.className = "current";
+      }
+
+      this.otherPlayers.appendChild(row);
+    });
+    this.endDiv.style.display = "flex";
+    clearInterval(this.timerInterval);
+  }
+
+  setLevel(lvl) {
+    this.levelDiv.innerText = lvl;
+  }
+
+  setAttempts(att) {
+    this.attemptsDiv.innerText = att;
+  }
+}
+
+class GameManager {
+  constructor(levels, uiManager, onEnd = () => {}) {
+    this.levels = levels;
+    this.uiManager = uiManager;
+    this.name = "unnamed";
+    this.levels.forEach((l) => {
+      l.onEnd = (att) => {
+        this.currentLevel++;
+        this.uiManager.setLevel(this.currentLevel + 1);
+        if (this.currentLevel >= this.levels.length) {
+          this.internalLoopStopObject.stop = true;
+          const finalPoints = this.levels.map((level, i) => {
+            return parseInt(Math.max(0, 11 - level.attempts) * (i + 1) * 1.2);
+          });
+          const existing = JSON.parse(localStorage.getItem("players") || "[]");
+          existing.push({
+            name: this.name,
+            points: finalPoints.reduce((a, b) => a + b, 0),
+          });
+
+          localStorage.setItem("players", JSON.stringify(existing));
+          existing[existing.length - 1].current = true;
+          existing.sort((a, b) => b.points - a.points);
+          this.uiManager.end(finalPoints, existing);
+          onEnd(finalPoints);
+        }
+      };
+      l.onAttemptEnd = (att) => {
+        this.uiManager.setAttempts(att);
+      };
+    });
+    this.currentLevel = 0;
+    this.internalLoopStopObject = { stop: false };
+  }
+
+  start() {
+    this.uiManager.start();
     //game loop
     animationInterval(() => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      this.levels[this.currentLevel].gameLoop(ctx);
+      this.levels[this.currentLevel].gameLoop(ctx, "white");
       if (this.leftPressed) {
         this.levels[this.currentLevel].moveSliders(1);
       }
       if (this.rightPressed) {
         this.levels[this.currentLevel].moveSliders(-1);
       }
-    });
+    }, this.internalLoopStopObject);
+
+    this.startTime = new Date().getTime();
 
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") {
@@ -572,9 +674,10 @@ class Level {
     brickManager.otherObjects.push(...sliders);
     this.brickManager = brickManager;
     this.sliders = sliders;
-    this.attempts = 0;
+    this.attempts = 1;
     this.start = brickManager.copy();
     this.onEnd = onEnd;
+    this.onAttemptEnd = () => {};
   }
 
   gameLoop(ctx, color = "black") {
@@ -592,6 +695,7 @@ class Level {
 
     if (this.brickManager.balls.length === 0) {
       this.attempts++;
+      this.onAttemptEnd(this.attempts);
       this.brickManager = this.start.copy();
       this.sliders = this.brickManager.otherObjects.filter(
         (oo) => oo.type === "slider"
